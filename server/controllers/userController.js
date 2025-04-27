@@ -3,22 +3,93 @@ import User from "../models/User.js";
 import { v2 as cloudinary } from "cloudinary";
 import Job from "../models/Job.js"; 
 
+// Sync user from Clerk
+export const syncUser = async (req, res) => {
+  try {
+    const { _id, name, email, image } = req.body;
+    
+    if (!_id || !name || !email || !image) {
+      return res.json({ 
+        success: false, 
+        message: 'Missing required fields' 
+      });
+    }
+
+    // Try to find user by email first
+    let user = await User.findOne({ email: email });
+    
+    if (!user) {
+      // Create new user with clerk ID
+      user = new User({
+        _id,
+        name,
+        email,
+        image
+      });
+    } else {
+      // For existing users, keep their original _id but update other fields
+      user.name = name;
+      user.email = email;
+      user.image = image;
+    }
+
+    // Save the user
+    await user.save();
+    
+    res.json({ success: true, user });
+  } catch (error) {
+    console.error('Error in syncUser:', error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 
 // Get user data
 export const getUserData = async (req, res) => {
-
-    const userId = req.auth.userId
-
     try {
-        const user = await User.findById(userId)
+        console.log('Auth data:', req.auth);
+        
+        // Get all users to check what's in database
+        const allUsers = await User.find({});
+        console.log('All users:', allUsers);
 
-        if (!user) {
-            return res.json({success:false,message:'User not Found'})
+        // Try to find by userId first
+        let user = await User.findById(req.auth.userId);
+        console.log('Found by ID:', user);
+
+        // If not found and we have email in auth, try by email
+        if (!user && req.auth.email) {
+            user = await User.findOne({ email: req.auth.email });
+            console.log('Found by email:', user);
         }
 
-        res.json({success:true,user})
+        // If still not found, try to find by any matching field
+        if (!user) {
+            user = await User.findOne({
+                $or: [
+                    { _id: req.auth.userId },
+                    { email: req.auth.email },
+                    { name: req.auth.name }
+                ]
+            });
+            console.log('Found by any field:', user);
+        }
+
+        if (!user) {
+            return res.json({
+                success: false,
+                message: 'User not Found',
+                debug: {
+                    authData: req.auth,
+                    usersInDb: allUsers.length
+                }
+            });
+        }
+
+        res.json({success: true, user});
     } catch (error) {
-        res.json({success:false,message:error.message})
+        console.error('Error in getUserData:', error);
+        res.json({success: false, message: error.message});
     }
 }
 
