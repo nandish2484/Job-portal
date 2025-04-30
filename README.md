@@ -4,8 +4,7 @@ A modern full-stack Job Portal web application where users can register, log in,
 
 ## 🌐 Live Demo
 
-https://job-portal-client-mrjv3pprx-nandish-panchals-projects.vercel.app/
-
+https://job-portal-client-three-gamma.vercel.app/
 ---
 
 ## 📌 Features
