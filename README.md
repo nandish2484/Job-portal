@@ -4,7 +4,7 @@ A modern full-stack Job Portal web application where users can register, log in,
 
 ## 🌐 Live Demo
 
-https://github.com/nandish2484/Job-portal/deployments/Production%20%E2%80%93%20job-portal-client
+https://job-portal-client-mrjv3pprx-nandish-panchals-projects.vercel.app/
 
 ---
 
